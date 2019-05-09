@@ -1,0 +1,18 @@
+<header class="header"></header>
+<div class="container">
+<ul class="list-group ScrollStyle ">
+	 <li class="list-group-item" *ngFor="let file of files">
+		<span class="">{{file}}</span>
+		
+<div class="progressbarclass">
+		<span  style="width: 100px;" *ngIf="downloading === null" ></span>
+		<span  style="width: 100px;" *ngIf="downloading === 'downloading'">downloading</span>
+		<span  style="width: 100px;" *ngIf="downloading === 'success'" >Downloaded</span>
+</div>		
+		<button class="download" (click)="downloadFile(file)">Download</button>
+	</li>
+
+</ul>
+</div>
+
+

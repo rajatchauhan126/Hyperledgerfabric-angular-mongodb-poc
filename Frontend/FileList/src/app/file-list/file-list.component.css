@@ -1,0 +1,28 @@
+
+//----------------------new class
+
+.ScrollStyle {
+    max-height: 150px;
+    overflow-y: scroll;
+}
+
+button:hover {
+  background-color: #cfd8dc;
+}
+
+button.download {
+	position: relative;
+	float: right;
+	background-color: gray !important;
+	color: white;
+}
+
+header {
+	margin-top : 20px;
+}
+
+.progressbarclass {
+	position: relative;
+	float: right;
+	right: 200px;
+}
