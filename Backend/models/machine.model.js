@@ -11,7 +11,12 @@ const machine = new Schema ({
     service_detail: {
         last_service: {type: String},
         next_service: {type: String}
-    }
+    },
+    machine_services_list: [
+        {
+            last_service_date: {type: String}
+        }
+    ]
 },
 {
 timestamps: true

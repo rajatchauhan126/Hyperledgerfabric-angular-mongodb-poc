@@ -9,6 +9,8 @@ router.get('/test', machine_controller.test);
 
 router.post('/saveMachine', machine_controller.saveMachine);
 
+router.post('/update_service_detail', machine_controller.update_service_detail);
+
 router.get('/getMachine', machine_controller.getMachine);
 
 //router.post('/downloadfile', machine_controller.downloadfile);
