@@ -1,0 +1,334 @@
+~: Hyperledger Fabric and Composer :~
+=====================================
+
+Ubuntu :-
+========
+
+To run Hyperledger Composer and Hyperledger Fabric, we recommend you have at least 4Gb of memory.
+
+The following are prerequisites for installing the required development tools:
+
+    ->Operating Systems: Ubuntu Linux 14.04 / 16.04 LTS (both 64-bit), or Mac OS 10.12
+    ->Docker Engine: Version 17.03 or higher.
+	{ https://docs.docker.com/docker-for-mac/install/ }
+	---------------------------------------------------
+    ->Docker-Compose: Version 1.8 or higher
+    ->Node: 8.9 or higher (note version 9 is not supported)
+    ->npm: v5.x
+    ->git: 2.9.x or higher
+    ->Python: 2.7.x
+    ->A code editor of your choice, we recommend VSCode.
+	{  https://code.visualstudio.com }
+	----------------------------------
+
+Installing the development environment :~
+========================================
+
+Step1 : Installing components :-
+================================
+
+1.Essential CLI tools:-
+======================
+
+$ npm install -g composer-cli@0.19
+----------------------------------
+
+2.Utility for running a REST Server on your machine to expose your business networks as RESTful
+APIs:-
+===============================================================================================
+
+$ npm install -g composer-rest-server@0.19
+------------------------------------------
+
+3.Useful utility for generating application assets:-
+====================================================
+
+$ npm install -g generator-hyperledger-composer@0.19
+----------------------------------------------------
+
+4.Yeoman is a tool for generating applications, which utilises generator-hyperledger-composer:-
+===============================================================================================
+
+$ npm install -g yo
+--------------------
+
+Step2 : Install Playground :-
+============================
+
+1.Browser app for simple editing and testing Business Networks:-
+================================================================
+
+$ npm install -g composer-playground@0.19
+-----------------------------------------
+
+Step3 : Set up your IDE :-
+==========================
+
+1.Install VSCode from this URL: https://code.visualstudio.com/download
+2.Open VSCode, go to Extensions, then search for and install the Hyperledger Composer extension from the Marketplace.
+
+Step4 : Install Hyperledger Fabric :-
+=====================================
+
+1.In a directory of your choice (we will assume ~/fabric-dev-servers), get the .tar.gz file that
+contains the tools to install Hyperledger Fabric:-
+================================================================================================
+
+$ mkdir ~/fabric-dev-servers && cd ~/fabric-dev-servers
+------------------------------------------------------
+$ curl -O https://raw.githubusercontent.com/hyperledger/composer-tools/master/packages/fabric-dev-
+  servers/fabric-dev-servers.tar.gz
+--------------------------------------------------------------------------------------------------
+$ tar -xvf fabric-dev-servers.tar.gz
+-----------------------------------
+
+2.Use the scripts you just downloaded and extracted to download a local Hyperledger Fabric v1.1 ===============================================================================================
+runtime:-
+=========
+
+$ cd ~/fabric-dev-servers
+-------------------------
+$ export FABRIC_VERSION=hlfv11
+------------------------------
+$ ./downloadFabric.sh
+---------------------
+
+Controlling your dev environment :~
+===================================
+
+Starting and stopping Hyperledger Fabric :-
+===========================================
+
+1.The first time you start up a new runtime, you'll need to run the start script, then generate a =================================================================================================
+PeerAdmin card:-
+===============
+
+$ cd ~/fabric-dev-servers
+$ export FABRIC_VERSION=hlfv11
+$ ./startFabric.sh
+$ ./createPeerAdminCard.sh
+
+Start the web app ("Playground") :-
+===================================
+
+1.To start the web app, run:-
+=============================
+
+$ composer-playground
+---------------------
+
+Appendix: To destroy a previous setup :-
+========================================
+
+$ docker kill $(docker ps -q)
+-----------------------------
+$ docker rm $(docker ps -aq)
+----------------------------
+$ docker rmi $(docker images dev-* -q)
+--------------------------------------
+
+===================================================================================================
+
+" Developer tutorial for creating a Hyperledger Composer solution "
+===================================================================
+{*** https://hyperledger.github.io/composer/v0.19/tutorials/developer-tutorial ***}
+
+Step One: Creating a business network structure :-
+==================================================
+
+
+
+1.Create a skeleton business network using Yeoman. This command will require a business network name, description, author name, author email address, license selection and namespace.
+------------------------------------------------------------------------------------------------
+run the command.
+----------------
+$ yo hyperledger-composer:businessnetwork
+-----------------------------------------
+2.Enter tutorial-network for the network name, and desired information for description, author name, and author email.
+
+3.Select Apache-2.0 as the license.
+
+4.Select org.example.mynetwork as the namespace.
+
+5.Select No when asked whether to generate an empty network or not.
+
+Step Two: Defining a business network :-
+========================================
+
+A business network is made up of assets, participants, transactions, access control rules, and optionally events and queries. 
+
+1.Open the org.example.mynetwork.cto model file.
+------------------------------------------------
+2.Replace the contents with the following:
+------------------------------------------
+    /**
+     * My commodity trading network
+     */
+    namespace org.example.mynetwork
+    asset Commodity identified by tradingSymbol {
+        o String tradingSymbol
+        o String description
+        o String mainExchange
+        o Double quantity
+        --> Trader owner
+    }
+    participant Trader identified by tradeId {
+        o String tradeId
+        o String firstName
+        o String lastName
+    }
+    transaction Trade {
+        --> Commodity commodity
+        --> Trader newOwner
+    }
+
+3.Save your changes to org.example.mynetwork.cto.
+-------------------------------------------------
+
+Adding JavaScript transaction logic :-
+======================================
+1.Open the logic.js script file.
+--------------------------------
+2.Replace the contents with the following:-
+-------------------------------------------
+
+    /**
+     * Track the trade of a commodity from one trader to another
+     * @param {org.example.mynetwork.Trade} trade - the trade to be processed
+     * @transaction
+     */
+    async function tradeCommodity(trade) {
+        trade.commodity.owner = trade.newOwner;
+        let assetRegistry = await getAssetRegistry('org.example.mynetwork.Commodity');
+        await assetRegistry.update(trade.commodity);
+    }
+
+3.Save your changes to logic.js.
+--------------------------------
+
+Adding access control :-
+========================
+
+1.Replace the following access control rules in the file permissions.acl :-
+--------------------------------------------------------------------------
+   
+ /**
+     * Access control rules for tutorial-network
+     */
+    rule Default {
+        description: "Allow all participants access to all resources"
+        participant: "ANY"
+        operation: ALL
+        resource: "org.example.mynetwork.*"
+        action: ALLOW
+    }
+
+    rule SystemACL {
+      description:  "System ACL to permit all access"
+      participant: "ANY"
+      operation: ALL
+      resource: "org.hyperledger.composer.system.**"
+      action: ALLOW
+    }
+
+2.Save your changes to permissions.acl.
+---------------------------------------
+
+Step Three: Generate a business network archive :-
+==================================================
+
+1.Using the command line, navigate to the tutorial-network directory.
+---------------------------------------------------------------------
+2.From the tutorial-network directory, run the following command:
+-----------------------------------------------------------------
+$ composer archive create -t dir -n .
+-------------------------------------
+
+3.After the command has run, a business network archive file called tutorial-network@0.0.1.bna has been created in the tutorial-network directory.
+--------------------------------------------------------------------------------------------------
+
+Step Four: Deploying the business network :-
+--------------------------------------------
+
+Retrieving the correct credentials :-
+=====================================
+A PeerAdmin business network card with the correct credentials is already created as part of development environment installation.
+
+Deploying the business network :-
+=================================
+
+1.To install the business network, from the tutorial-network directory, run the following comman :-
+---------------------------------------------------------------------------------------------------
+
+$ composer network install --card PeerAdmin@hlfv1 --archiveFile tutorial-network@0.0.1.bna
+------------------------------------------------------------------------------------------
+
+2.To start the business network, run the following command:-
+-----------------------------------------------------------
+
+$ composer network start --networkName tutorial-network --networkVersion 0.0.1 --networkAdmin admin --networkAdminEnrollSecret adminpw --card PeerAdmin@hlfv1 --file networkadmin.card
+----------------------------------------------------------------------------------------------
+
+3.To import the network administrator identity as a usable business network card, run the following command:-
+-----------------------------------------------------------------------------------------
+
+$ composer card import --file networkadmin.card
+-----------------------------------------------
+
+4.To check that the business network has been deployed successfully, run the following command to ping the network:-
+--------------------------------------------------------------------------------------------------
+
+$ composer network ping --card admin@tutorial-network
+-----------------------------------------------------
+
+Step Five: Generating a REST server :-
+======================================
+
+"""Hyperledger Composer can generate a bespoke REST API based on a business network. For developing a web application, the REST API provides a useful layer of language-neutral abstraction."""
+
+1.To create the REST API, navigate to the tutorial-network directory and run the following command:
+---------------------------------------------------------------------------------------------------
+            $ composer-rest-server
+            ----------------------
+2.Enter admin@tutorial-network as the card name.
+------------------------------------------------
+3.Select never use namespaces when asked whether to use namespaces in the generated API.
+----------------------------------------------------------------------------------------
+4.Select No when asked whether to secure the generated API.
+-----------------------------------------------------------
+5.Select Yes when asked whether to enable event publication.
+------------------------------------------------------------
+6.Select No when asked whether to enable TLS security.
+------------------------------------------------------
+"""The generated API is connected to the deployed blockchain and business network."""
+
+
+Step Six: Generating an application :-
+======================================
+
+"""Hyperledger Composer can also generate an Angular 4 application running against the REST API."""
+
+1.To create your Angular 4 application, navigate to tutorial-network directory and run the following command:
+------------------------------------------------------------------------------------------
+        $ yo hyperledger-composer:angular
+	---------------------------------
+2.Select Yes when asked to connect to running business network.
+---------------------------------------------------------------
+3.Enter standard package.json questions (project name, description, author name, author email, license)
+----------------------------------------------------------------------------------------------
+4.Enter admin@tutorial-network for the business network card.
+-------------------------------------------------------------
+5.Select Connect to an existing REST API
+----------------------------------------
+6.Enter http://localhost for the REST server address.
+-----------------------------------------------------
+7.Enter 3000 for server port.
+-----------------------------
+8.Select Namespaces are not used.
+---------------------------------
+
+"""The Angular generator will then create the scaffolding for the project and install all dependencies. To run the application, navigate to your angular project directory and run npm start . This will fire up an Angular 4 application running against your REST API at http://localhost:4200 .""""
+
+
+----------------------------------------***Thank you***--------------------------------------------
+
